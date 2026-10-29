@@ -1,0 +1,11 @@
+[project]
+name = "trello-agent"
+version = "0.1.0"
+description = "Trợ lý Trello trên Discord, chạy bằng model local qua Ollama"
+requires-python = ">=3.10"
+dependencies = [
+    "discord.py>=2.4",
+    "ollama>=0.5",
+    "requests>=2.31",
+    "python-dotenv>=1.0",
+]
