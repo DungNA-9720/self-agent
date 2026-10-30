@@ -4,8 +4,9 @@ Documented from existing code (2026-10-29). Describes what the bot does today.
 
 ## Goal
 
-Let one person manage a single Trello board by chatting in Vietnamese on Discord,
-using a local LLM (Ollama) so no conversation data goes to a cloud model.
+One personal assistant on Discord, chatting in Vietnamese, using a local LLM (Ollama) so no
+conversation data goes to a cloud model. Capabilities come from tool groups: manage a single
+Trello board, and summarize VnExpress news.
 
 ## User stories (MVP, implemented)
 
@@ -20,9 +21,17 @@ using a local LLM (Ollama) so no conversation data goes to a cloud model.
 9. **Reset.** `!reset` clears conversation memory for the channel.
 10. **Long replies.** Replies over Discord's 2000-char limit are split into 1900-char chunks.
 
+11. **News summary.** When I ask for news (optionally a category like Thể thao, Kinh doanh, and a count), the bot fetches VnExpress RSS and replies with short bullet points, each with its link, using only feed content.
+12. **Unknown category.** If the category matches none or several, the bot asks me instead of guessing.
+13. **Fresh news only.** News older than 3 days is never returned.
+14. **News by channel.** In a channel named after a category (e.g. `#the-thao`), asking "có tin gì mới?" returns that category's news, answered in that channel. In other channels the default is "Tin mới nhất"; naming a category still works anywhere.
+15. **Morning brief.** Every day at 08:00 (configurable), the bot sends me (DM or a chosen channel) a greeting with the date, 3–5 impactful news items with links, and my Trello tasks: overdue and due today first, then by column. `!morning` sends it on demand. I can ask follow-ups about it.
+
 ## Out of scope / later
 
 - Multiple boards or multiple users
 - Delete / archive / rename cards, edit due dates, checklists, labels, members
 - Persistent history across restarts
+- Fetching full article text; other news sources
+- Posting news into category channels automatically
 - Slash commands

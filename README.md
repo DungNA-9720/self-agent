@@ -1,12 +1,16 @@
-# trello-agent
+# self-agent
 
-Personal Trello assistant on Discord, powered by a **local LLM via Ollama**.
-You chat with the bot in Vietnamese (e.g. *"thêm việc gọi khách hàng vào cột To Do, hạn thứ 6"*);
-the model calls Trello tools (list / create / move / comment) and replies.
+Personal assistant on Discord, powered by a **local LLM via Ollama**. One agent, several tool groups:
+
+- **Trello** – list / create / move / comment on cards of one board
+- **News** – fetch and summarize VnExpress articles from the last 3 days via RSS (https://vnexpress.net/rss)
+- **Morning brief** – every day at 08:00 the bot sends a greeting, top news (Tin nổi bật) and a summary of your Trello cards
+
+You chat in Vietnamese (e.g. *"thêm việc gọi khách hàng vào cột To Do, hạn thứ 6"*, *"tóm tắt tin thể thao hôm nay"*);
+the model calls tools and replies in Vietnamese.
 
 - Single-user: bot only answers the Discord user set in `DISCORD_USER_ID`.
-- Runs fully local except Discord + Trello APIs. No cloud LLM.
-- Bot replies in Vietnamese (system prompt enforces it).
+- Runs locally except Discord, Trello and VnExpress HTTP calls. No cloud LLM.
 
 ## Requirements
 
@@ -18,10 +22,10 @@ the model calls Trello tools (list / create / move / comment) and replies.
 ## Quick start
 
 ```bash
-uv sync                    # install dependencies into .venv
-cp .env.example .env       # then fill in the values
-ollama serve               # if not already running
-uv run python -m trello_agent   # start the bot
+uv sync                          # install dependencies into .venv
+cp .env.example .env             # then fill in the values
+ollama serve                     # if not already running
+uv run python -m self_agent      # start the bot
 ```
 
 Invite the bot to your server, then message it in the configured channel.
@@ -32,7 +36,10 @@ Invite the bot to your server, then message it in the configured channel.
 |---|---|---|
 | `DISCORD_BOT_TOKEN` | yes | Discord bot token |
 | `DISCORD_USER_ID` | yes | Only this user ID gets answers |
-| `DISCORD_CHANNEL_ID` | no | Restrict to one channel; empty = any channel the bot sees |
+| `DISCORD_CHANNEL_ID` | no | Comma-separated channel IDs the bot answers in; empty = any channel the bot sees. DMs from you are always answered |
+| `MORNING_TIME` | no | Morning brief time `HH:MM`, default `08:00`; empty = off |
+| `TIMEZONE` | no | Timezone for `MORNING_TIME`, default `Asia/Ho_Chi_Minh` |
+| `MORNING_CHANNEL_ID` | no | Channel for the morning brief; empty = first ID in `DISCORD_CHANNEL_ID`; both empty = DM to you |
 | `TRELLO_API_KEY` | yes | Trello API key |
 | `TRELLO_TOKEN` | yes | Trello user token |
 | `TRELLO_BOARD_ID` | yes | Board to manage |
@@ -40,7 +47,7 @@ Invite the bot to your server, then message it in the configured channel.
 | `OLLAMA_HOST` | no | Default `http://localhost:11434` |
 | `OLLAMA_THINK` | no | `false` disables "thinking" for faster replies; leave empty if model errors |
 
-`.env` holds secrets and is gitignored. Never commit it.
+News needs no config. `.env` holds secrets and is gitignored. Never commit it.
 
 ## Usage
 
@@ -51,24 +58,36 @@ Talk naturally. Examples:
 - `thêm thẻ "Gọi khách hàng" vào To Do, hạn 2026-11-01` – create card
 - `chuyển thẻ gọi khách hàng sang Done` – move card (partial names work)
 - `comment vào thẻ gọi khách hàng: đã gọi xong` – add comment
+- `có tin gì mới?` – summary of latest news
+- `tóm tắt 5 tin kinh doanh` – news by category (Thời sự, Thế giới, Kinh doanh, Thể thao, Khoa học công nghệ, …)
+- `!morning` – send the morning brief now, in this channel
 - `!reset` – clear conversation history for this channel
+
+**News channels:** name a Discord channel after a category (`#the-thao`, `#thể-thao`, `#kinh-doanh`, `#doi-song`, `#khoa-hoc-cong-nghe`, …). Asking `có tin gì mới?` there returns that category. Other channels default to "Tin mới nhất". Remember to add those channel IDs to `DISCORD_CHANNEL_ID` if it is set.
 
 ## Project structure
 
 ```
-trello_agent/
-  __main__.py     entrypoint (`python -m trello_agent`)
-  config.py       env vars + tuning constants
-  trello.py       Trello REST helper, name lookup, the 5 tool functions
-  tools.py        tool registry, JSON schemas for the model, run_tool error mapping
-  agent.py        Ollama client, system prompt, history, tool-calling loop
-  discord_bot.py  Discord client, message filtering, !reset, reply chunking
-pyproject.toml    project metadata + dependencies
-uv.lock           pinned dependency versions
-.env.example      config template
-docs/             spec, architecture, task tracking
-.claude/agents/   Claude Code subagent definitions
-CLAUDE.md         guide for Claude Code / maintainers
+self_agent/
+  __main__.py          entrypoint (`python -m self_agent`)
+  config.py            env vars + tuning constants
+  agent.py             the single agent: Ollama client, system prompt, history, tool loop
+  morning.py           morning brief: fetch news + Trello cards, model writes the message
+  discord_bot.py       Discord client, message filtering, !reset / !morning, daily 08:00 job
+  tools/
+    __init__.py        registry: merges all groups, run_tool error mapping
+    common.py          shared helpers: spec(), s(), find_by_name()
+    trello/
+      __init__.py      TOOLS + SPECS for Trello
+      api.py           Trello REST helper and tool functions
+    news/
+      __init__.py      TOOLS + SPECS for news
+      vnexpress.py     VnExpress RSS categories, parser, get_news
+pyproject.toml / uv.lock
+.env.example           config template
+docs/                  spec, architecture, task tracking
+.claude/agents/        Claude Code subagent definitions
+CLAUDE.md              guide for Claude Code / maintainers
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how it works and [docs/TASKS.md](docs/TASKS.md) for status and open work.

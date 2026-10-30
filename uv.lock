@@ -1361,7 +1361,7 @@ wheels = [
 ]
 
 [[package]]
-name = "trello-agent"
+name = "self-agent"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

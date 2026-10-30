@@ -1,7 +1,7 @@
 [project]
-name = "trello-agent"
+name = "self-agent"
 version = "0.1.0"
-description = "Trợ lý Trello trên Discord, chạy bằng model local qua Ollama"
+description = "Trợ lý cá nhân trên Discord (Trello, tin tức VnExpress), chạy bằng model local qua Ollama"
 requires-python = ">=3.10"
 dependencies = [
     "discord.py>=2.4",
