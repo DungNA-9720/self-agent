@@ -29,7 +29,7 @@ async def send_morning(channel):
         except Exception as e:  # lỗi Ollama, mất kết nối...
             text = f"Chào buổi sáng! Chưa tạo được bản tin vì lỗi khi gọi model: {e}"
     for part in chunks(text):
-        await channel.send(part)
+        await channel.send(part, suppress_embeds=True)  # chỉ hiện link, không bung ô xem trước
 
 
 async def morning_channel():
@@ -86,7 +86,7 @@ async def on_message(message):
             answer = f"Lỗi khi gọi model: {e}"
 
     for part in chunks(answer):
-        await message.reply(part, mention_author=False)
+        await message.reply(part, mention_author=False, suppress_embeds=True)
 
 
 def run():

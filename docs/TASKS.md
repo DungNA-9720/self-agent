@@ -22,6 +22,7 @@ Status as of 2026-10-29. Mark items `[x]` when done and add a one-line note.
 - [x] Morning weather as one bullet per item (Trời, Nhiệt độ, Mưa, UV, Lời khuyên); weekday/date passed in from code after model wrote wrong weekday (2026-10-30).
 - [x] Local test page `python -m self_agent.web`: stateless chat (no history), tool trace, simulated channel name, `!morning` (2026-10-30).
 - [x] Morning brief layout: full icon template for all sections; weather icon computed from WMO code; fixed truncated brief by raising Ollama context to 8192 (`OLLAMA_NUM_CTX`, Ollama default 4096 hit `done_reason=length`) (2026-10-30).
+- [x] Bot messages sent with `suppress_embeds=True`: news/Trello links show as plain links, no preview cards (2026-10-30).
 
 ## Open
 
