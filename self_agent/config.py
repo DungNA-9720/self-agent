@@ -33,6 +33,9 @@ MORNING_TIME = _morning_time()
 # cả hai rỗng = gửi tin nhắn riêng (DM) cho người dùng
 MORNING_CHANNEL_ID = int(os.getenv("MORNING_CHANNEL_ID") or 0) or next(iter(CHANNEL_IDS), 0)
 
-HISTORY_LEN = 20      # số tin nhắn gần nhất model được nhớ
+# Địa điểm mặc định cho dự báo thời tiết và bản tin buổi sáng
+WEATHER_LOCATION = os.getenv("WEATHER_LOCATION") or "Hà Nội"
+
+HISTORY_LEN = 20     # số tin nhắn gần nhất model được nhớ
 MAX_TOOL_ROUNDS = 6    # số vòng gọi tool tối đa cho mỗi tin nhắn
 TRELLO_API = "https://api.trello.com/1"

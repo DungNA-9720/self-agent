@@ -13,9 +13,13 @@ ollama = AsyncClient(host=OLLAMA_HOST)
 history = defaultdict(lambda: deque(maxlen=HISTORY_LEN))
 
 
+def weekday_vi(d):
+    return "Chủ nhật" if d.isoweekday() == 7 else f"Thứ {d.isoweekday() + 1}"
+
+
 def system_prompt(news_category=None):
     today = date.today()
-    weekday = "Chủ nhật" if today.isoweekday() == 7 else f"Thứ {today.isoweekday() + 1}"
+    weekday = weekday_vi(today)
     channel_hint = (
         f"Kênh chat hiện tại dành cho tin '{news_category}': khi người dùng hỏi tin tức mà "
         "không nói chuyên mục, gọi get_news không truyền category để lấy đúng chuyên mục này. "
@@ -23,7 +27,7 @@ def system_prompt(news_category=None):
     )
     return (
         "Bạn là trợ lý quản lý công việc trên bảng Trello của người dùng, "
-        "kiêm tổng hợp tin tức từ báo VnExpress. "
+        "kiêm tổng hợp tin tức từ báo VnExpress và dự báo thời tiết. "
         f"Hôm nay là {weekday}, ngày {today:%Y-%m-%d}. "
         "Luôn trả lời bằng tiếng Việt, ngắn gọn. "
         "Khi cần xem hoặc thay đổi dữ liệu Trello, hãy gọi tool; không bao giờ tự bịa tên thẻ, "
@@ -31,6 +35,8 @@ def system_prompt(news_category=None):
         "Nếu tool báo lỗi hoặc có nhiều kết quả trùng tên, hãy hỏi lại người dùng. "
         "Khi người dùng hỏi tin tức, gọi get_news rồi tổng hợp thành gạch đầu dòng ngắn "
         "theo ý chính, mỗi tin kèm link; chỉ dùng nội dung tool trả về, không bịa thêm. "
+        "Khi người dùng hỏi thời tiết, gọi get_weather (tự tính ngày từ 'mai', 'thứ 7'...); "
+        "nếu hỏi một mốc giờ thì trả lời theo mốc giờ gần nhất trong dữ liệu theo giờ. "
         + channel_hint
     )
 
@@ -44,8 +50,10 @@ async def chat(messages, tools=None):
     return resp.message
 
 
-async def ask_model(channel_id, user_text, channel_name=""):
-    hist = history[channel_id]
+async def ask_model(channel_id, user_text, channel_name="", trace=None):
+    """channel_id=None: không dùng và không lưu lịch sử (trang test web).
+    trace: list nhận các lượt gọi tool {tool, args, result} để hiển thị khi debug."""
+    hist = history[channel_id] if channel_id is not None else []
     news_category = category_for_channel(channel_name)
     if news_category:
         default_category.set(news_category)  # chỉ ảnh hưởng task xử lý tin nhắn này
@@ -66,6 +74,9 @@ async def ask_model(channel_id, user_text, channel_name=""):
             print(f"  -> tool {call.function.name}({call.function.arguments})")
             result = await run_tool(call.function.name, call.function.arguments)
             messages.append({"role": "tool", "content": result, "tool_name": call.function.name})
+            if trace is not None:
+                trace.append({"tool": call.function.name, "args": call.function.arguments,
+                              "result": result})
 
     # Chỉ lưu câu hỏi và câu trả lời cuối vào lịch sử để giữ ngữ cảnh gọn
     hist.append({"role": "user", "content": user_text})

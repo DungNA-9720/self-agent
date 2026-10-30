@@ -9,9 +9,9 @@ import xml.etree.ElementTree as ET
 
 import requests
 
-from . import news, trello
+from . import news, trello, weather
 
-GROUPS = [trello, news]
+GROUPS = [trello, news, weather]
 
 TOOLS = {name: fn for g in GROUPS for name, fn in g.TOOLS.items()}
 TOOL_SPECS = [sp for g in GROUPS for sp in g.SPECS]

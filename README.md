@@ -4,7 +4,8 @@ Personal assistant on Discord, powered by a **local LLM via Ollama**. One agent,
 
 - **Trello** – list / create / move / comment on cards of one board
 - **News** – fetch and summarize VnExpress articles from the last 3 days via RSS (https://vnexpress.net/rss)
-- **Morning brief** – every day at 08:00 the bot sends a greeting, top news (Tin nổi bật) and a summary of your Trello cards
+- **Weather** – daily and hourly forecast for any place from Open-Meteo (https://open-meteo.com, no API key)
+- **Morning brief** – every day at 08:00 the bot sends a greeting, weather for today and tomorrow, top news (Tin nổi bật) and a summary of your Trello cards
 
 You chat in Vietnamese (e.g. *"thêm việc gọi khách hàng vào cột To Do, hạn thứ 6"*, *"tóm tắt tin thể thao hôm nay"*);
 the model calls tools and replies in Vietnamese.
@@ -30,6 +31,14 @@ uv run python -m self_agent      # start the bot
 
 Invite the bot to your server, then message it in the configured channel.
 
+### Local test page (no Discord)
+
+```bash
+uv run python -m self_agent.web        # then open http://127.0.0.1:8000 (port: add a number)
+```
+
+Chat with the same agent and tools in the browser. **No memory**: every message is answered on its own, nothing is stored. Shows which tools were called (args + raw result) and response time. Fill "Tên kênh giả lập" (e.g. `the-thao`) to test news-by-channel; `!morning` shows the morning brief. Listens on 127.0.0.1 only (no login, and the agent can change Trello). Still needs `.env` and Ollama.
+
 ## Configuration (`.env`)
 
 | Variable | Required | Meaning |
@@ -39,6 +48,7 @@ Invite the bot to your server, then message it in the configured channel.
 | `DISCORD_CHANNEL_ID` | no | Comma-separated channel IDs the bot answers in; empty = any channel the bot sees. DMs from you are always answered |
 | `MORNING_TIME` | no | Morning brief time `HH:MM`, default `08:00`; empty = off |
 | `TIMEZONE` | no | Timezone for `MORNING_TIME`, default `Asia/Ho_Chi_Minh` |
+| `WEATHER_LOCATION` | no | Default place for weather questions and the morning brief, default `Hà Nội` |
 | `MORNING_CHANNEL_ID` | no | Channel for the morning brief; empty = first ID in `DISCORD_CHANNEL_ID`; both empty = DM to you |
 | `TRELLO_API_KEY` | yes | Trello API key |
 | `TRELLO_TOKEN` | yes | Trello user token |
@@ -47,7 +57,7 @@ Invite the bot to your server, then message it in the configured channel.
 | `OLLAMA_HOST` | no | Default `http://localhost:11434` |
 | `OLLAMA_THINK` | no | `false` disables "thinking" for faster replies; leave empty if model errors |
 
-News needs no config. `.env` holds secrets and is gitignored. Never commit it.
+News and weather need no API key. `.env` holds secrets and is gitignored. Never commit it.
 
 ## Usage
 
@@ -60,6 +70,8 @@ Talk naturally. Examples:
 - `comment vào thẻ gọi khách hàng: đã gọi xong` – add comment
 - `có tin gì mới?` – summary of latest news
 - `tóm tắt 5 tin kinh doanh` – news by category (Thời sự, Thế giới, Kinh doanh, Thể thao, Khoa học công nghệ, …)
+- `3 giờ chiều mai ở Hà Nội có mưa không?` – hourly forecast at a specific time
+- `thời tiết Đà Nẵng cuối tuần` – multi-day forecast for another place
 - `!morning` – send the morning brief now, in this channel
 - `!reset` – clear conversation history for this channel
 
@@ -72,8 +84,9 @@ self_agent/
   __main__.py          entrypoint (`python -m self_agent`)
   config.py            env vars + tuning constants
   agent.py             the single agent: Ollama client, system prompt, history, tool loop
-  morning.py           morning brief: fetch news + Trello cards, model writes the message
+  morning.py           morning brief: fetch weather + news + Trello cards, model writes the message
   discord_bot.py       Discord client, message filtering, !reset / !morning, daily 08:00 job
+  web.py, web.html     local test page: stateless chat with tool trace (stdlib http.server)
   tools/
     __init__.py        registry: merges all groups, run_tool error mapping
     common.py          shared helpers: spec(), s(), find_by_name()
@@ -83,6 +96,9 @@ self_agent/
     news/
       __init__.py      TOOLS + SPECS for news
       vnexpress.py     VnExpress RSS categories, parser, get_news
+    weather/
+      __init__.py      TOOLS + SPECS for weather
+      open_meteo.py    geocoding, forecast, WMO codes in Vietnamese, get_weather
 pyproject.toml / uv.lock
 .env.example           config template
 docs/                  spec, architecture, task tracking

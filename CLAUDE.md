@@ -4,14 +4,16 @@ Guide for Claude Code and maintainers working in this repo.
 
 ## What this is
 
-`self-agent`: single-user Discord bot with **one agent** (local Ollama model with tool calling) and several **tool groups**, each in its own folder under `self_agent/tools/`: Trello board management and VnExpress news (RSS). User chats in Vietnamese; bot replies in Vietnamese.
+`self-agent`: single-user Discord bot with **one agent** (local Ollama model with tool calling) and several **tool groups**, each in its own folder under `self_agent/tools/`: Trello board management, VnExpress news (RSS) and Open-Meteo weather. User chats in Vietnamese; bot replies in Vietnamese.
 
 ## Commands
 
 ```bash
 uv sync                                    # install deps
 uv run python -m self_agent                # run bot (needs .env, Ollama running)
+uv run python -m self_agent.web [port]     # local stateless test page, http://127.0.0.1:8000
 uv run python -m self_agent.tools.news.vnexpress   # RSS parser self-test (needs dummy env vars, see below)
+uv run python -m self_agent.tools.weather.open_meteo  # weather summarizer self-test (same)
 uv add <pkg>                               # add dependency (updates pyproject.toml + uv.lock)
 ```
 
@@ -24,14 +26,16 @@ No test suite, linter, or CI yet.
 
 Dependency direction: `config` ← `tools/<group>` ← `tools/__init__` ← `agent` ← `morning` ← `discord_bot` ← `__main__`. Keep it one-way; tool groups never import each other or `agent`.
 
-- `self_agent/config.py` – loads `.env`; required vars crash on import if missing; `CHANNEL_IDS`, `MORNING_TIME` (tz-aware `time` or `None`), `MORNING_CHANNEL_ID`
-- `self_agent/agent.py` – Ollama client, `chat()` (one model call), `system_prompt(news_category)`, `history`, `ask_model(channel_id, text, channel_name)`; sets news `default_category` from the channel name
-- `self_agent/morning.py` – `morning_brief(channel_id)`: fetches news + cards in code via `run_tool`, model only writes the text
+- `self_agent/config.py` – loads `.env`; required vars crash on import if missing; `CHANNEL_IDS`, `MORNING_TIME` (tz-aware `time` or `None`), `MORNING_CHANNEL_ID` (falls back to first `CHANNEL_IDS`), `WEATHER_LOCATION`
+- `self_agent/agent.py` – Ollama client, `chat()` (one model call), `system_prompt(news_category)`, `history`, `ask_model(channel_id, text, channel_name, trace)` (`channel_id=None` = no history read/write; `trace` list collects tool calls); sets news `default_category` from the channel name
+- `self_agent/morning.py` – `morning_brief(channel_id)`: fetches weather (today + tomorrow) + news + cards in code via `run_tool`, model only writes the text
 - `self_agent/discord_bot.py` – Discord client, `on_message` (`!reset`, `!morning`), global `lock`, daily `morning_job` (`discord.ext.tasks`), `run()`
+- `self_agent/web.py` + `web.html` – local test page; one background event loop (Ollama httpx client is loop-bound), `ask_model(None, …)` so nothing is remembered; binds 127.0.0.1 only
 - `self_agent/tools/__init__.py` – `GROUPS`, merged `TOOLS` / `TOOL_SPECS`, `run_tool`
 - `self_agent/tools/common.py` – `spec()`, `s()`, `find_by_name()`
 - `self_agent/tools/trello/` – `api.py` (functions), `__init__.py` (`TOOLS`, `SPECS`)
 - `self_agent/tools/news/` – `vnexpress.py` (`CATEGORIES`, `MAX_AGE_DAYS=3`, `parse_rss`, `get_news`, `category_for_channel`, `default_category` ContextVar), `__init__.py` (`TOOLS`, `SPECS`)
+- `self_agent/tools/weather/` – `open_meteo.py` (`geocode`, `summarize`, `get_weather`, `WMO` code → Vietnamese), `__init__.py` (`TOOLS`, `SPECS`)
 - `docs/SPEC.md` – user stories / scope
 - `docs/ARCHITECTURE.md` – flow, components, trade-offs (read before changing code)
 - `docs/TASKS.md` – done / open work, known issues (update when finishing a task)

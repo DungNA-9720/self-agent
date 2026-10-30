@@ -6,7 +6,7 @@ Documented from existing code (2026-10-29). Describes what the bot does today.
 
 One personal assistant on Discord, chatting in Vietnamese, using a local LLM (Ollama) so no
 conversation data goes to a cloud model. Capabilities come from tool groups: manage a single
-Trello board, and summarize VnExpress news.
+Trello board, summarize VnExpress news, and give weather forecasts.
 
 ## User stories (MVP, implemented)
 
@@ -25,7 +25,9 @@ Trello board, and summarize VnExpress news.
 12. **Unknown category.** If the category matches none or several, the bot asks me instead of guessing.
 13. **Fresh news only.** News older than 3 days is never returned.
 14. **News by channel.** In a channel named after a category (e.g. `#the-thao`), asking "có tin gì mới?" returns that category's news, answered in that channel. In other channels the default is "Tin mới nhất"; naming a category still works anywhere.
-15. **Morning brief.** Every day at 08:00 (configurable), the bot sends me (DM or a chosen channel) a greeting with the date, 3–5 impactful news items with links, and my Trello tasks: overdue and due today first, then by column. `!morning` sends it on demand. I can ask follow-ups about it.
+15. **Morning brief.** Every day at 08:00 (configurable), the bot sends me (a chosen channel, else the first allowed channel, else DM) a greeting with the date, the weather for today and tomorrow, 3–5 impactful news items with links, and my Trello tasks: overdue and due today first, then by column. `!morning` sends it on demand. I can ask follow-ups about it.
+16. **Weather on demand.** I can ask the weather for today, tomorrow or a given day (up to 7 days at once), for my default place or any named place, including at a specific hour ("3 giờ chiều mai có mưa không?"); the bot answers from the nearest hourly forecast.
+17. **Unknown place.** If the place can't be found, the bot asks me for another name.
 
 ## Out of scope / later
 

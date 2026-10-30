@@ -18,6 +18,9 @@ Status as of 2026-10-29. Mark items `[x]` when done and add a one-line note.
 - [x] News limited to last 3 days; dropped stale `tin-xem-nhieu` feed (2026-10-29).
 - [x] News by channel: channel named after a category (`#the-thao`) defaults `get_news` to it. `DISCORD_CHANNEL_ID` accepts a comma-separated list; DMs always answered.
 - [x] Morning brief at 08:00 (`MORNING_TIME`, `TIMEZONE`, `MORNING_CHANNEL_ID`): greeting + Tin nổi bật + Trello summary; `!morning` to trigger manually.
+- [x] Weather tool group (Open-Meteo): `get_weather` daily + hourly for any place; weather today + tomorrow in the morning brief; `WEATHER_LOCATION` (2026-10-30).
+- [x] Morning weather as one bullet per item (Trời, Nhiệt độ, Mưa, UV, Lời khuyên); weekday/date passed in from code after model wrote wrong weekday (2026-10-30).
+- [x] Local test page `python -m self_agent.web`: stateless chat (no history), tool trace, simulated channel name, `!morning` (2026-10-30).
 
 ## Open
 
