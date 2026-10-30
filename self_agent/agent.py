@@ -5,7 +5,7 @@ from datetime import date
 
 from ollama import AsyncClient
 
-from .config import HISTORY_LEN, MAX_TOOL_ROUNDS, MODEL, OLLAMA_HOST, THINK
+from .config import HISTORY_LEN, MAX_TOOL_ROUNDS, MODEL, NUM_CTX, OLLAMA_HOST, THINK
 from .tools import TOOL_SPECS, run_tool
 from .tools.news import category_for_channel, default_category
 
@@ -45,7 +45,8 @@ async def chat(messages, tools=None):
     """Một lượt gọi Ollama, trả về message của model."""
     extra = {"think": False} if THINK == "false" else {}
     resp = await ollama.chat(
-        model=MODEL, messages=messages, tools=tools, options={"temperature": 0.3}, **extra,
+        model=MODEL, messages=messages, tools=tools,
+        options={"temperature": 0.3, "num_ctx": NUM_CTX}, **extra,
     )
     return resp.message
 

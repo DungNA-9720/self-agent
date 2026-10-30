@@ -17,6 +17,9 @@ TRELLO_TOKEN = os.environ["TRELLO_TOKEN"]
 TRELLO_BOARD = os.environ["TRELLO_BOARD_ID"]
 MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:9b")
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+# Ngữ cảnh (token) cho mỗi lượt gọi; mặc định của Ollama là 4096, không đủ cho bản tin sáng
+# (dữ liệu ~3.400 token + trả lời) nên bị cắt giữa chừng. Tăng thì tốn thêm RAM/VRAM.
+NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX") or 8192)
 THINK = os.getenv("OLLAMA_THINK", "").lower()  # "false" để tắt chế độ suy nghĩ (trả lời nhanh hơn)
 
 def _morning_time():

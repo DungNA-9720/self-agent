@@ -8,28 +8,47 @@ from .tools import run_tool
 
 NEWS_COUNT = 5
 
+# Khuôn đầy đủ cả 4 phần: model 9B bắt chước khuôn rất sát, phần nào thiếu icon/gạch đầu
+# dòng trong khuôn thì nó cũng bỏ luôn.
 PROMPT = (
-    "Viết bản tin buổi sáng gửi người dùng qua Discord, gồm 4 phần:\n"
+    "Viết bản tin buổi sáng gửi người dùng qua Discord.\n"
     "Hôm nay là {today}, ngày mai là {tomorrow}; dùng đúng thứ và ngày này, không tự tính.\n"
-    "1) Lời chào ngày mới ngắn, ấm áp, có thứ và ngày hôm nay.\n"
-    "2) **Thời tiết** tại địa điểm trong dữ liệu, cho hôm nay và ngày mai. Mỗi thông tin một "
-    "gạch đầu dòng riêng, không gộp nhiều thông tin vào một dòng, đúng khuôn sau:\n"
-    "**Thời tiết <địa điểm>**\n"
-    "**Hôm nay (<thứ>, <ngày/tháng>):**\n"
-    "- Trời: <mô tả>\n"
-    "- Nhiệt độ: <thấp>–<cao>°C\n"
-    "- Mưa: khả năng <x>%, dễ mưa nhất khoảng <giờ>–<giờ> (ghi 'ít khả năng mưa' nếu dưới 30%)\n"
-    "- UV: <chỉ số> (<thấp/trung bình/cao/rất cao>)\n"
-    "- Lời khuyên: <1 câu ngắn: mang ô, chống nắng...>\n"
-    "**Ngày mai (<thứ>, <ngày/tháng>):**\n"
-    "<5 gạch đầu dòng như trên>\n"
-    "3) **Tin nổi bật**: 3-5 tin có sức ảnh hưởng nhất trong dữ liệu tin, "
-    "mỗi tin 1 dòng tóm tắt kèm link.\n"
-    "4) **Công việc**: trước tiên một dòng 'Quá hạn' và một dòng 'Đến hạn hôm nay' "
-    "(ghi 'không có' nếu trống); sau đó liệt kê các thẻ còn lại, nhóm dưới tên từng cột. "
-    "Bỏ qua thẻ đã xong (done=true).\n"
-    "Chỉ dùng dữ liệu bên dưới, không bịa. Phần nào dữ liệu báo lỗi thì nói ngắn gọn là "
-    "chưa lấy được.\n\n"
+    "Trình bày ĐÚNG khuôn dưới đây, giữ nguyên icon, chữ đậm và gạch đầu dòng; mỗi thông tin "
+    "một dòng riêng, không gộp; thay phần <...> bằng dữ liệu.\n\n"
+    "--- KHUÔN ---\n"
+    "☀️ **Chào buổi sáng! Hôm nay là <thứ>, <ngày/tháng/năm>**\n"
+    "<1 câu chúc ngắn, ấm áp>\n\n"
+    "🌦️ **Thời tiết <địa điểm>**\n"
+    "📅 **Hôm nay (<thứ>, <ngày/tháng>)**\n"
+    "- <icon> Trời: <mô tả>\n"
+    "- 🌡️ Nhiệt độ: <thấp>–<cao>°C\n"
+    "- ☔ Mưa: <khả năng mưa>\n"
+    "- 🔆 UV: <chỉ số> (<mức>)\n"
+    "- 💡 Lời khuyên: <lời khuyên>\n\n"
+    "📅 **Ngày mai (<thứ>, <ngày/tháng>)**\n"
+    "<5 dòng giống hệt hôm nay>\n\n"
+    "📰 **Tin nổi bật**\n"
+    "- 📌 **<tiêu đề>**: <tóm tắt> 🔗 <link>\n"
+    "<các tin khác, mỗi tin một dòng như trên>\n\n"
+    "📋 **Công việc**\n"
+    "- ⚠️ Quá hạn: <tên thẻ, hoặc 'không có'>\n"
+    "- ⏰ Đến hạn hôm nay: <tên thẻ, hoặc 'không có'>\n"
+    "🗂️ **<tên cột>**\n"
+    "- <tên thẻ> <(hạn ngày/tháng) nếu có>\n"
+    "<các cột khác như trên>\n\n"
+    "💪 <1 câu kết ngắn>\n"
+    "--- HẾT KHUÔN ---\n\n"
+    "Quy tắc điền (không chép quy tắc vào bản tin):\n"
+    "- <icon>: lấy đúng trường icon của ngày đó trong dữ liệu thời tiết.\n"
+    "- <khả năng mưa>: 'khả năng X%, dễ mưa nhất khoảng HH:MM–HH:MM' theo các mốc giờ; "
+    "nếu dưới 30% thì ghi 'ít khả năng mưa (X%)'.\n"
+    "- <mức> UV: dưới 3 thấp, 3-5 trung bình, 6-7 cao, 8-10 rất cao, từ 11 cực cao.\n"
+    "- <lời khuyên>: 1 câu ngắn hợp với mưa/nắng/UV của ngày đó.\n"
+    "- Tin: chọn 3-5 tin có sức ảnh hưởng nhất; <tóm tắt> tối đa 20 từ.\n"
+    "- Công việc: chỉ thẻ chưa xong (done=false); bỏ cột không còn thẻ; thẻ không có hạn "
+    "thì chỉ ghi tên.\n"
+    "- Chỉ dùng dữ liệu bên dưới, không bịa. Phần nào dữ liệu báo lỗi thì ghi một dòng ngắn "
+    "là chưa lấy được.\n\n"
     "Dữ liệu thời tiết (JSON): {weather}\n\n"
     "Dữ liệu tin (JSON): {news}\n\n"
     "Dữ liệu thẻ Trello (JSON): {cards}"
@@ -55,7 +74,9 @@ async def morning_brief(channel_id):
             weather=weather, news=news, cards=cards,
         )},
     ])
-    answer = (msg.content or "").strip() or "Chào buổi sáng! (Model không viết được bản tin.)"
+    # Model đôi khi chép cả dòng đánh dấu khuôn "--- KHUÔN ---" / "--- HẾT KHUÔN ---"
+    text = "\n".join(l for l in (msg.content or "").splitlines() if "KHUÔN ---" not in l)
+    answer = text.strip() or "Chào buổi sáng! (Model không viết được bản tin.)"
     # Lưu bản tin vào lịch sử để người dùng hỏi tiếp ("chi tiết tin số 2"); None = không lưu
     if channel_id is not None:
         history[channel_id].append({"role": "assistant", "content": answer})

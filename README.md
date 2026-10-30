@@ -55,6 +55,7 @@ Chat with the same agent and tools in the browser. **No memory**: every message 
 | `TRELLO_BOARD_ID` | yes | Board to manage |
 | `OLLAMA_MODEL` | no | Default `qwen3.5:9b`; must support tool calling |
 | `OLLAMA_HOST` | no | Default `http://localhost:11434` |
+| `OLLAMA_NUM_CTX` | no | Context tokens per model call, default `8192` (Ollama's own default 4096 cuts off the morning brief) |
 | `OLLAMA_THINK` | no | `false` disables "thinking" for faster replies; leave empty if model errors |
 
 News and weather need no API key. `.env` holds secrets and is gitignored. Never commit it.

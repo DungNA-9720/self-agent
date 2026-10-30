@@ -35,6 +35,27 @@ def _wmo(code):
     return WMO.get(code, f"mã thời tiết {code}")
 
 
+def _icon(code):
+    """Icon theo nhóm mã WMO (để bản tin không phụ thuộc model tự chọn icon)."""
+    if code == 0:
+        return "☀️"
+    if code in (1, 2):
+        return "⛅"
+    if code == 3:
+        return "☁️"
+    if code in (45, 48):
+        return "🌫️"
+    if 51 <= code <= 57 or code == 80:
+        return "🌦️"
+    if 61 <= code <= 67 or code in (81, 82):
+        return "🌧️"
+    if 71 <= code <= 77 or code in (85, 86):
+        return "🌨️"
+    if code >= 95:
+        return "⛈️"
+    return "🌡️"
+
+
 def geocode(name):
     resp = requests.get(GEOCODE_URL, params={"name": name, "count": 1, "language": "vi"}, timeout=15)
     resp.raise_for_status()
@@ -67,6 +88,7 @@ def summarize(data, step):
         {
             "date": day,
             "weather": _wmo(d["weather_code"][i]),
+            "icon": _icon(d["weather_code"][i]),
             "temp_min": d["temperature_2m_min"][i],
             "temp_max": d["temperature_2m_max"][i],
             "rain_mm": d["precipitation_sum"][i],
@@ -96,7 +118,8 @@ def get_weather(location=None, date=None, days=1):
         params["forecast_days"] = days  # bắt đầu từ hôm nay theo giờ địa phương
     resp = requests.get(FORECAST_URL, params=params, timeout=15)
     resp.raise_for_status()
-    name = ", ".join(x for x in (place.get("name"), place.get("admin1"), place.get("country")) if x)
+    # Bỏ admin1: hay là tên tiếng Anh lặp lại ("Hà Nội, Hanoi, Việt Nam")
+    name = ", ".join(x for x in (place.get("name"), place.get("country")) if x)
     # 1 ngày: từng giờ; nhiều ngày: mỗi 3 giờ cho gọn
     return {"location": name, "days": summarize(resp.json(), 1 if days == 1 else 3)}
 
@@ -117,7 +140,9 @@ if __name__ == "__main__":
         },
     }
     one = summarize(sample, 1)[0]
-    assert one["weather"] == "Mưa phùn nhẹ" and one["sunrise"] == "05:58"
+    assert one["weather"] == "Mưa phùn nhẹ" and one["icon"] == "🌦️" and one["sunrise"] == "05:58"
+    assert [_icon(c) for c in (0, 2, 3, 45, 63, 82, 75, 95, 1234)] == [
+        "☀️", "⛅", "☁️", "🌫️", "🌧️", "🌧️", "🌨️", "⛈️", "⛈️"]
     assert len(one["hourly"]) == 24 and one["hourly"][15] == {
         "time": "15:00", "weather": "Có mây", "temp": 15, "feels_like": 15, "humidity_pct": 90,
         "rain_chance_pct": 20, "rain_mm": 0.0, "wind_kmh": 3.6}
